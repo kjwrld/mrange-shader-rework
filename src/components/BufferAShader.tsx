@@ -39,7 +39,7 @@ const BufferAShaderMaterial = shaderMaterial(
     const float TOLERANCE = 1.0E-4;
     const float MAX_RAY_LENGTH = 20.;
     const float NORM_OFF = 0.005;
-    const float MAX_RAY_MARCHES = 50.0;
+    const float MAX_RAY_MARCHES = 30.0;
 
     const vec4 hsv2rgb_K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
 
@@ -82,53 +82,24 @@ const BufferAShaderMaterial = shaderMaterial(
       mat2 r = ROT(a + g_anim);
       return box(r * q, vec2(d.y)) - d.z;
     }
-
-    float infinityTube(vec3 p, float time, float a, vec3 scale, float radius) {
-        float t = atan(p.x, p.z); // Angle around Y-axis
-        float distortion = 1.0 + 0.1 * sin(time + t * 5.0); // Wavy motion
-
-        // Parametric infinity curve
-        vec3 curvePoint = vec3(
-            a * sin(t) * scale.x,
-            a * sin(t) * cos(t) * scale.y,
-            a * cos(t) * scale.z
-        );
-
-        curvePoint *= distortion; // Apply distortion dynamically
-
-        return length(p - curvePoint) - radius; // Subtract tube radius
-    }
+      
 
     float df(vec3 p) {
-        return infinityTube(p, TIME, 5.0, vec3(1.0, 1.0, 1.0), 0.2);
+      vec3 p0 = p.yzx;
+      float d = twistedBoxTorus(p0, vec3(2.5, 0.6, 0.075));
+      return d;
     }
-
-    // float df(vec3 p) {
-    //   vec3 p0 = p.yzx;
-    //   float d = twistedBoxTorus(p0, vec3(2.5, 0.6, 0.075));
-    //   return d;
-    // }
 
     float rayMarch(vec3 ro, vec3 rd) {
-        float t = 0.0;
-        for (int i = 0; i < int(MAX_RAY_MARCHES); ++i) {
-            float d = df(ro + rd * t);
-            if (d < TOLERANCE) return t;
-            t += d * 0.5; // Smaller steps for precision
-            if (t > MAX_RAY_LENGTH) break;
-        }
-        return MAX_RAY_LENGTH;
+      float t = 0.0;
+      for (int i = 0; i < int(MAX_RAY_MARCHES); ++i) {
+        if (t > float(MAX_RAY_LENGTH)) break;
+        float d = df(ro + rd * t);
+        if (d < TOLERANCE) return t;
+        t += d;
+      }
+      return MAX_RAY_LENGTH;
     }
-    // float rayMarch(vec3 ro, vec3 rd) {
-    //   float t = 0.0;
-    //   for (int i = 0; i < int(MAX_RAY_MARCHES); ++i) {
-    //     if (t > float(MAX_RAY_LENGTH)) break;
-    //     float d = df(ro + rd * t);
-    //     if (d < TOLERANCE) return t;
-    //     t += d;
-    //   }
-    //   return MAX_RAY_LENGTH;
-    // }
 
     vec3 normal(vec3 pos) {
       vec2 eps = vec2(NORM_OFF, 0.0);
@@ -154,7 +125,7 @@ const BufferAShaderMaterial = shaderMaterial(
       if (tp1 > 0.0) {
         vec3 pos = ro + tp1 * rd;
         vec2 pp = pos.xz;
-        float db = box(pp, vec2(5.0, 9.0)) - 3.0;
+        float db = box(pp, vec2(5.0, 9.0)) - 10.0;
 
         col += vec3(4.0) * skyCol * rd.y * rd.y * smoothstep(0.25, 0.0, db);
         col += vec3(0.8) * skyCol * exp(-0.5 * max(db, 0.0));
