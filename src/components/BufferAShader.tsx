@@ -78,10 +78,8 @@ const BufferA: React.FC = () => {
     const materialRef = useRef<any>();
     const meshRef = useRef<THREE.Mesh>(null);
     const mouseRef = useRef({ x: 0, y: 0 });
-    const lerpedSpherePosition = useRef({ x: 0, y: 0 }); // Smoothly updated position
 
     // Leva controls
-    // const { sphereRadius } = useControls({
     const { sphereRadius, spherePosition } = useControls({
         sphereRadius: {
             value: 0.5,
@@ -131,21 +129,6 @@ const BufferA: React.FC = () => {
                 adjustedSpherePosition.y,
                 adjustedSpherePosition.z
             );
-
-            // Lerp sphere position for smoother interaction
-            // const lerpFactor = 0.05; // Smoothing factor
-            // lerpedSpherePosition.current.x +=
-            //     (mouseRef.current.x - lerpedSpherePosition.current.x) *
-            //     lerpFactor;
-            // lerpedSpherePosition.current.y +=
-            //     (mouseRef.current.y - lerpedSpherePosition.current.y) *
-            //     lerpFactor;
-
-            // materialRef.current.spherePosition.set(
-            //     lerpedSpherePosition.current.x * aspect,
-            //     lerpedSpherePosition.current.y,
-            //     0.0 // Keep Z fixed
-            // );
         }
 
         // Dynamically adjust the plane size
