@@ -1,8 +1,7 @@
 import { extend, useFrame } from "@react-three/fiber";
 import { shaderMaterial } from "@react-three/drei";
-import { useControls } from "leva";
 import * as THREE from "three";
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 
 // Faithful translation of the GLSL shader
 const BufferAShaderMaterial = shaderMaterial(
@@ -14,7 +13,7 @@ const BufferAShaderMaterial = shaderMaterial(
             1
         ),
         ro: new THREE.Vector3(1.3, 1.1, 8.0), // Default camera position
-        twistAmount: 0.0,
+        twistAmount: 0.2,
     },
     `
     varying vec2 vUv;
@@ -52,6 +51,7 @@ const BufferAShaderMaterial = shaderMaterial(
     #define HSV2RGB(c) (c.z * mix(hsv2rgb_K.xxx, clamp(abs(fract(c.xxx + hsv2rgb_K.xyz) * 6.0 - hsv2rgb_K.www) - hsv2rgb_K.xxx, 0.0, 1.0), c.y))
 
     const float hoff = 0.;
+    // const vec3 skyCol = HSV2RGB(vec3(hoff + 0.57, 0.70, 0.25));
     const vec3 skyCol = HSV2RGB(vec3(hoff + 0.57, 0.70, 0.25));
     // const vec3 sunDir = normalize(vec3(0.0, 0.0, 1.0));
 
@@ -184,21 +184,37 @@ extend({ BufferAShaderMaterial });
 
 export default function BufferA() {
     const materialRef = useRef<any>();
+    const lerpedCameraPosition = useRef(new THREE.Vector3(0, 0.1, 8.0)); // Default camera position
+    const mousePosition = useRef({ x: 0, y: 0 });
 
-    // Leva controls
-    const { x, y, z } = useControls("Camera Position (ro)", {
-        x: { value: 0, min: -10, max: 10, step: 0.1 },
-        y: { value: 0.1, min: -10, max: 10, step: 0.1 },
-        z: { value: 8.0, min: -20, max: 20, step: 0.1 },
-    });
+    const onMouseMove = (event: MouseEvent) => {
+        const { clientX, clientY } = event;
+        mousePosition.current.x = (clientX / window.innerWidth) * 2 - 1; // Normalize to range [-1, 1]
+        mousePosition.current.y = -(clientY / window.innerHeight) * 2 + 1; // Normalize to range [-1, 1]
+    };
 
     useFrame(({ clock, size }) => {
         if (materialRef.current) {
             materialRef.current.iTime = clock.getElapsedTime();
             materialRef.current.iResolution.set(size.width, size.height, 1);
-            materialRef.current.ro.set(x, y, z); // Update camera position
+            // Lerp the camera position
+            const targetPosition = new THREE.Vector3(
+                mousePosition.current.x * -5, // Map mouse x to range
+                mousePosition.current.y * 5, // Map mouse y to range
+                8.0
+            );
+            lerpedCameraPosition.current.lerp(targetPosition, 0.05); // Smooth transition
+            materialRef.current.ro.copy(lerpedCameraPosition.current);
         }
     });
+
+    // Add mouse event listener
+    useEffect(() => {
+        window.addEventListener("mousemove", onMouseMove);
+        return () => {
+            window.removeEventListener("mousemove", onMouseMove);
+        };
+    }, []);
 
     return (
         <mesh>
