@@ -12,8 +12,12 @@ const CanvasWrapper: React.FC<CanvasWrapperProps> = ({ children }) => {
             camera={{ position: [0, 0, 5], fov: 90 }}
             gl={{ antialias: false }}
         >
-            <color attach="background" args={["black"]} />
-            <OrbitControls />
+            <color attach="background" args={["white"]} />
+            <OrbitControls
+                enableZoom={false}
+                enableRotate={false}
+                enablePan={false}
+            />
             {children}
         </Canvas>
     );

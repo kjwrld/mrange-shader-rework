@@ -139,7 +139,7 @@ const BufferA: React.FC = () => {
     });
 
     return (
-        <mesh ref={meshRef} onPointerOver={(e) => e.stopPropagation()}>
+        <mesh ref={meshRef} pointerEvents="none">
             {" "}
             {/* Prevent interaction */}
             <planeGeometry args={[5, 5]} />
