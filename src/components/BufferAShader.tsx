@@ -39,7 +39,7 @@ const BufferAShaderMaterial = shaderMaterial(
     const float TOLERANCE = 1.0E-4;
     const float MAX_RAY_LENGTH = 20.;
     const float NORM_OFF = 0.005;
-    const float MAX_RAY_MARCHES = 30.0;
+    const float MAX_RAY_MARCHES = 50.0;
 
     const vec4 hsv2rgb_K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
 
@@ -51,12 +51,11 @@ const BufferAShaderMaterial = shaderMaterial(
     #define HSV2RGB(c) (c.z * mix(hsv2rgb_K.xxx, clamp(abs(fract(c.xxx + hsv2rgb_K.xyz) * 6.0 - hsv2rgb_K.www) - hsv2rgb_K.xxx, 0.0, 1.0), c.y))
 
     const float hoff = 0.;
-    // const vec3 skyCol = HSV2RGB(vec3(hoff + 0.57, 0.70, 0.25));
     const vec3 skyCol = HSV2RGB(vec3(hoff + 0.57, 0.70, 0.25));
     // const vec3 sunDir = normalize(vec3(0.0, 0.0, 1.0));
 
     float g_anim;
-
+    
     float rayPlane(vec3 ro, vec3 rd, vec4 p) {
       return -(dot(ro, p.xyz) + p.w) / dot(rd, p.xyz);
     }
@@ -84,22 +83,52 @@ const BufferAShaderMaterial = shaderMaterial(
       return box(r * q, vec2(d.y)) - d.z;
     }
 
-    float df(vec3 p) {
-      vec3 p0 = p.yzx;
-      float d = twistedBoxTorus(p0, vec3(2.5, 0.6, 0.075));
-      return d;
+    float infinityTube(vec3 p, float time, float a, vec3 scale, float radius) {
+        float t = atan(p.x, p.z); // Angle around Y-axis
+        float distortion = 1.0 + 0.1 * sin(time + t * 5.0); // Wavy motion
+
+        // Parametric infinity curve
+        vec3 curvePoint = vec3(
+            a * sin(t) * scale.x,
+            a * sin(t) * cos(t) * scale.y,
+            a * cos(t) * scale.z
+        );
+
+        curvePoint *= distortion; // Apply distortion dynamically
+
+        return length(p - curvePoint) - radius; // Subtract tube radius
     }
 
-    float rayMarch(vec3 ro, vec3 rd) {
-      float t = 0.0;
-      for (int i = 0; i < int(MAX_RAY_MARCHES); ++i) {
-        if (t > float(MAX_RAY_LENGTH)) break;
-        float d = df(ro + rd * t);
-        if (d < TOLERANCE) return t;
-        t += d;
-      }
-      return MAX_RAY_LENGTH;
+    float df(vec3 p) {
+        return infinityTube(p, TIME, 5.0, vec3(1.0, 1.0, 1.0), 0.2);
     }
+
+    // float df(vec3 p) {
+    //   vec3 p0 = p.yzx;
+    //   float d = twistedBoxTorus(p0, vec3(2.5, 0.6, 0.075));
+    //   return d;
+    // }
+
+    float rayMarch(vec3 ro, vec3 rd) {
+        float t = 0.0;
+        for (int i = 0; i < int(MAX_RAY_MARCHES); ++i) {
+            float d = df(ro + rd * t);
+            if (d < TOLERANCE) return t;
+            t += d * 0.5; // Smaller steps for precision
+            if (t > MAX_RAY_LENGTH) break;
+        }
+        return MAX_RAY_LENGTH;
+    }
+    // float rayMarch(vec3 ro, vec3 rd) {
+    //   float t = 0.0;
+    //   for (int i = 0; i < int(MAX_RAY_MARCHES); ++i) {
+    //     if (t > float(MAX_RAY_LENGTH)) break;
+    //     float d = df(ro + rd * t);
+    //     if (d < TOLERANCE) return t;
+    //     t += d;
+    //   }
+    //   return MAX_RAY_LENGTH;
+    // }
 
     vec3 normal(vec3 pos) {
       vec2 eps = vec2(NORM_OFF, 0.0);
@@ -113,7 +142,7 @@ const BufferAShaderMaterial = shaderMaterial(
     vec3 render0(vec3 ro, vec3 rd) {
       vec3 col = vec3(0.0);
 
-    //   col += 1E-2 * (skyCol * skyCol) / (1.0001 + dot(rd, sunDir));
+      //  col += 1E-2 * (skyCol * skyCol) / (1.0001 + dot(rd, sunDir));
 
       float tp0 = rayPlane(ro, rd, vec4(vec3(0.0, -1.0, 0.0), -5.0));
       float tp1 = rayPlane(ro, rd, vec4(vec3(0.0, -1.0, 0.0), 6.0));

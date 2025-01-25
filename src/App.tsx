@@ -22,11 +22,11 @@ const App: React.FC = () => {
         <>
             <CanvasWrapper>
                 <BufferA />
-                {sceneTexture.current && renderTarget.current && (
+                {/* {sceneTexture.current && renderTarget.current && (
                     <fXAAShaderMaterial
                         tDiffuse={renderTarget.current.texture} // Ensure texture is passed
                     />
-                )}
+                )} */}
             </CanvasWrapper>
         </>
     );
