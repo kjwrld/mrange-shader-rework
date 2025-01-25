@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef } from "react";
 import { extend, useFrame } from "@react-three/fiber";
 import { shaderMaterial } from "@react-three/drei";
 import { useControls } from "leva";
@@ -18,6 +18,8 @@ const BufferAShader = shaderMaterial(
         torusRadius: 2.5, // Radius of the torus
         torusPosition: new THREE.Vector3(0.0, 0.0, 0.0), // Position of the torus
         torusRotation: new THREE.Vector3(0.0, 0.0, 0.0), // Rotation of the torus
+        startColor: new THREE.Color(0xff0000), // Start color for gradient (red)
+        endColor: new THREE.Color(0x0000ff), // End color for gradient (blue)
     },
     `
   void main() {
@@ -32,15 +34,17 @@ const BufferAShader = shaderMaterial(
   uniform float torusRadius;
   uniform vec3 torusPosition;
   uniform vec3 torusRotation;
+  uniform vec3 startColor;
+  uniform vec3 endColor;
 
   const float TOLERANCE = 1.0E-4;
   const float MAX_RAY_LENGTH = 20.0;
 
-  // Colors for visualization
-  const vec3 backgroundColor = vec3(0.85); // Light gray
-  const vec3 objectColor = vec3(0.25);    // Dark gray
+  vec3 calculateColor(vec3 pos, float t) {
+    float gradientFactor = (sin(t + pos.x * 2.0 + pos.y * 2.0) + 1.0) / 2.0;
+    return mix(startColor, endColor, gradientFactor);
+  }
 
-  // Helper functions (twistedBoxTorus and ray marching)
   float box(vec2 p, vec2 b) {
     vec2 d = abs(p) - b;
     return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0);
@@ -62,9 +66,8 @@ const BufferAShader = shaderMaterial(
   }
 
   float twistedBoxTorus(vec3 p, float twist, vec2 boxDims, float radius) {
-    // Apply rotation and translation to the torus
-    p -= torusPosition; // Translate to position
-    p = rotationMatrix(torusRotation) * p; // Rotate the torus
+    p -= torusPosition;
+    p = rotationMatrix(torusRotation) * p;
 
     vec2 q = vec2(length(p.xz) - radius, p.y);
     float angle = atan(p.x, p.z) + twist * iTime;
@@ -93,9 +96,10 @@ const BufferAShader = shaderMaterial(
     vec3 rd = vec3(0.0, 0.0, -1.0);
 
     float t = rayMarch(ro, rd);
-    vec3 color = backgroundColor;
+    vec3 color = vec3(0.85);
     if (t < MAX_RAY_LENGTH) {
-      color = objectColor;
+      vec3 hitPos = ro + rd * t;
+      color = calculateColor(hitPos, iTime);
     }
 
     gl_FragColor = vec4(color, 1.0);
@@ -110,44 +114,59 @@ const BufferA: React.FC = () => {
     const meshRef = useRef<THREE.Mesh>(null);
 
     // Add Leva controls
-    const { twistAmount, boxSize, torusRadius, torusPosition, torusRotation } =
-        useControls({
-            twistAmount: {
-                value: 0.1,
-                min: -5.0,
-                max: 5.0,
-                step: 0.1,
-                label: "Twist Amount",
-            },
-            boxSize: {
-                value: { x: 0.2, y: 0.2 },
-                min: 0.1,
-                max: 2.0,
-                step: 0.1,
-                label: "Box Dimensions",
-            },
-            torusRadius: {
-                value: 1.25,
-                min: 1.0,
-                max: 5.0,
-                step: 0.1,
-                label: "Torus Radius",
-            },
-            torusPosition: {
-                value: { x: 1.0, y: 1.0, z: 0.0 },
-                min: -5.0,
-                max: 5.0,
-                step: 0.1,
-                label: "Torus Position",
-            },
-            torusRotation: {
-                value: { x: 1.6, y: 0.0, z: 0.0 },
-                min: -Math.PI,
-                max: Math.PI,
-                step: 0.1,
-                label: "Torus Rotation",
-            },
-        });
+    const {
+        twistAmount,
+        boxSize,
+        torusRadius,
+        torusPosition,
+        torusRotation,
+        startColor,
+        endColor,
+    } = useControls({
+        twistAmount: {
+            value: 0.1,
+            min: -5.0,
+            max: 5.0,
+            step: 0.1,
+            label: "Twist Amount",
+        },
+        boxSize: {
+            value: { x: 0.2, y: 0.2 },
+            min: 0.1,
+            max: 2.0,
+            step: 0.1,
+            label: "Box Dimensions",
+        },
+        torusRadius: {
+            value: 1.25,
+            min: 1.0,
+            max: 5.0,
+            step: 0.1,
+            label: "Torus Radius",
+        },
+        torusPosition: {
+            value: { x: 1.0, y: 1.0, z: 0.0 },
+            min: -5.0,
+            max: 5.0,
+            step: 0.1,
+            label: "Torus Position",
+        },
+        torusRotation: {
+            value: { x: 1.6, y: 0.0, z: 0.0 },
+            min: -Math.PI,
+            max: Math.PI,
+            step: 0.1,
+            label: "Torus Rotation",
+        },
+        startColor: {
+            value: "#ff0000",
+            label: "Start Color",
+        },
+        endColor: {
+            value: "#0000ff",
+            label: "End Color",
+        },
+    });
 
     // Update shader uniforms dynamically
     useFrame(({ clock, size }) => {
@@ -167,6 +186,8 @@ const BufferA: React.FC = () => {
                 torusRotation.y,
                 torusRotation.z
             );
+            materialRef.current.startColor.set(new THREE.Color(startColor));
+            materialRef.current.endColor.set(new THREE.Color(endColor));
         }
 
         // Dynamically adjust plane size
