@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { extend, useFrame } from "@react-three/fiber";
+import { extend, useFrame, useThree } from "@react-three/fiber";
 import { shaderMaterial } from "@react-three/drei";
 import { useControls } from "leva";
 import * as THREE from "three";
@@ -93,7 +93,7 @@ const BufferAShader = shaderMaterial(
       p -= torusPosition;
       p = rotationMatrix(torusRotation) * p;
 
-      vec2 q = vec2(length(p.xz) - radius, p.y);
+      vec2 q = vec2(length(p.xz) - (radius), p.y);
       float angle = atan(p.x, p.z) + twist * iTime;
       mat2 rot = ROT(angle);
       return box(rot * q, boxDims);
@@ -166,6 +166,7 @@ extend({ BufferAShader });
 const BufferA: React.FC = () => {
     const materialRef = useRef<any>();
     const meshRef = useRef<THREE.Mesh>(null);
+    const { size } = useThree();
 
     // Add Leva controls
     const {
@@ -213,7 +214,10 @@ const BufferA: React.FC = () => {
         hoff: { value: 0.0, min: 0.0, max: 1.0, step: 0.01 },
     });
 
-    useFrame(({ clock, size }) => {
+    // Update uniforms dynamically
+    useFrame(({ clock }) => {
+        const aspectRatio = size.width / size.height;
+
         if (materialRef.current) {
             materialRef.current.iTime = clock.getElapsedTime();
             materialRef.current.iResolution.set(size.width, size.height, 1);
@@ -221,7 +225,7 @@ const BufferA: React.FC = () => {
             materialRef.current.boxSize.set(boxSize.x, boxSize.y);
             materialRef.current.torusRadius = torusRadius;
             materialRef.current.torusPosition.set(
-                torusPosition.x,
+                torusPosition.x * aspectRatio,
                 torusPosition.y,
                 torusPosition.z
             );
@@ -243,7 +247,7 @@ const BufferA: React.FC = () => {
 
     return (
         <mesh ref={meshRef}>
-            <planeGeometry args={[10, 10]} />
+            <planeGeometry args={[window.innerWidth, window.innerHeight]} />
             <bufferAShader ref={materialRef} />
         </mesh>
     );
