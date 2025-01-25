@@ -53,7 +53,7 @@ const BufferAShaderMaterial = shaderMaterial(
 
     const float hoff = 0.;
     const vec3 skyCol = HSV2RGB(vec3(hoff + 0.57, 0.70, 0.25));
-    const vec3 sunDir = normalize(vec3(0.0, 0.0, 1.0));
+    // const vec3 sunDir = normalize(vec3(0.0, 0.0, 1.0));
 
     float g_anim;
 
@@ -113,13 +113,13 @@ const BufferAShaderMaterial = shaderMaterial(
     vec3 render0(vec3 ro, vec3 rd) {
       vec3 col = vec3(0.0);
 
-      col += 1E-2 * (skyCol * skyCol) / (1.0001 + dot(rd, sunDir));
+    //   col += 1E-2 * (skyCol * skyCol) / (1.0001 + dot(rd, sunDir));
 
       float tp0 = rayPlane(ro, rd, vec4(vec3(0.0, -1.0, 0.0), -5.0));
       float tp1 = rayPlane(ro, rd, vec4(vec3(0.0, -1.0, 0.0), 6.0));
 
       if (tp0 > 0.0) {
-        col += 0.85 * (skyCol) * exp(-0.5 * (length((ro + tp0 * rd).xz)));
+        col += 30.85 * (skyCol) * exp(-0.5 * (length((ro + tp0 * rd).xz)));
       }
 
       if (tp1 > 0.0) {
@@ -157,7 +157,7 @@ const BufferAShaderMaterial = shaderMaterial(
 
     void main() {
       vec2 q = gl_FragCoord.xy / iResolution.xy; // Normalized coordinates
-      vec2 p = -1.0 + 2.0 * q;                   // Remap to range [-1, 1]
+      vec2 p = -2.0 + 2.0 * q;                   // Remap to range [-1, 1]
       vec2 pp = p;                               // Preserve for further use
       p.x *= iResolution.x / iResolution.y;      // Adjust for aspect ratio
 
@@ -187,8 +187,8 @@ export default function BufferA() {
 
     // Leva controls
     const { x, y, z } = useControls("Camera Position (ro)", {
-        x: { value: 1.3, min: -10, max: 10, step: 0.1 },
-        y: { value: 1.1, min: -10, max: 10, step: 0.1 },
+        x: { value: 0, min: -10, max: 10, step: 0.1 },
+        y: { value: 0.1, min: -10, max: 10, step: 0.1 },
         z: { value: 8.0, min: -20, max: 20, step: 0.1 },
     });
 
