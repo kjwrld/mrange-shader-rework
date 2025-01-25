@@ -12,8 +12,8 @@ const BufferAShaderMaterial = shaderMaterial(
             window.innerHeight,
             1
         ),
-        ro: new THREE.Vector3(1.3, 1.1, 8.0), // Default camera position
-        twistAmount: 0.2,
+        ro: new THREE.Vector3(1.3, -1, 8.0), // Default camera position
+        twistAmount: 5,
     },
     `
     varying vec2 vUv;
@@ -160,6 +160,7 @@ const BufferAShaderMaterial = shaderMaterial(
       vec2 p = -2.0 + 2.0 * q;                   // Remap to range [-1, 1]
       vec2 pp = p;                               // Preserve for further use
       p.x *= iResolution.x / iResolution.y;      // Adjust for aspect ratio
+      g_anim = 0.125 * iTime * twistAmount;
 
       float fov = tan(TAU / 6.0); // Field of View
       vec3 la = vec3(0.0, 0.0, 0.0); // Look-at point
@@ -199,8 +200,8 @@ export default function BufferA() {
             materialRef.current.iResolution.set(size.width, size.height, 1);
             // Lerp the camera position
             const targetPosition = new THREE.Vector3(
-                mousePosition.current.x * -5, // Map mouse x to range
-                mousePosition.current.y * 5, // Map mouse y to range
+                mousePosition.current.x * -3, // Map mouse x to range
+                mousePosition.current.y * 3, // Map mouse y to range
                 8.0
             );
             lerpedCameraPosition.current.lerp(targetPosition, 0.05); // Smooth transition
