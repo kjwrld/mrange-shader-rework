@@ -8,6 +8,7 @@ declare global {
                 BufferAShader,
                 typeof BufferAShader
             >;
+            bufferAShaderMaterial: ReactThreeFiber.Object3DNode<any, any>;
             fxaaShader: ReactThreeFiber.Object3DNode<
                 FXAAShader,
                 typeof FXAAShader

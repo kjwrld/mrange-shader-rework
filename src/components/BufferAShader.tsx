@@ -1,11 +1,11 @@
-import { useRef } from "react";
-import { extend, useFrame, useThree } from "@react-three/fiber";
+import { extend, useFrame } from "@react-three/fiber";
 import { shaderMaterial } from "@react-three/drei";
 import { useControls } from "leva";
 import * as THREE from "three";
+import { useRef } from "react";
 
-// GLSL shader for BufferA
-const BufferAShader = shaderMaterial(
+// Faithful translation of the GLSL shader
+const BufferAShaderMaterial = shaderMaterial(
     {
         iTime: 0,
         iResolution: new THREE.Vector3(
@@ -13,19 +13,8 @@ const BufferAShader = shaderMaterial(
             window.innerHeight,
             1
         ),
+        ro: new THREE.Vector3(1.3, 1.1, 8.0), // Default camera position
         twistAmount: 0.0,
-        boxSize: new THREE.Vector2(0.5, 0.5),
-        torusRadius: 2.5,
-        torusPosition: new THREE.Vector3(0.0, 0.0, 0.0),
-        torusRotation: new THREE.Vector3(0.0, 0.0, 0.0),
-        sunDir: new THREE.Vector3(0.0, 0.0, 1.0),
-        groundPosition: -5.0,
-        ceilingPosition: 6.0,
-        reflectionStrength: 1.0,
-        skyHue: 0.57,
-        skySaturation: 0.7,
-        skyValue: 0.25,
-        hoff: 0.0,
     },
     `
     varying vec2 vUv;
@@ -34,223 +23,187 @@ const BufferAShader = shaderMaterial(
       vUv = uv;
       gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
     }
-  `,
+    `,
     `
-  uniform float iTime;
-  uniform vec3 iResolution;
-  uniform float twistAmount;
-  uniform vec2 boxSize;
-  uniform float torusRadius;
-  uniform vec3 torusPosition;
-  uniform vec3 torusRotation;
-  uniform vec3 sunDir;
-  uniform float groundPosition;
-  uniform float ceilingPosition;
-  uniform float reflectionStrength;
-  uniform float skyHue;
-  uniform float skySaturation;
-  uniform float skyValue;
-  uniform float hoff;
+    #define TIME        iTime
+    #define RESOLUTION  iResolution
+    #define ROT(a)      mat2(cos(a), sin(a), -sin(a), cos(a))
 
-  #define TIME iTime
-  #define RESOLUTION iResolution
-  #define ROT(a) mat2(cos(a), sin(a), -sin(a), cos(a))
+    uniform vec3 iResolution; // Viewport resolution (width, height, depth)
+    uniform float iTime;      // Time in seconds
+    uniform vec3 ro;
+    uniform float twistAmount;
 
-  const float PI = 3.14159265359;
-  const float TOLERANCE = 1.0E-4;
-  const float MAX_RAY_LENGTH = 20.0;
-  const float NORM_OFF = 0.005;
+    const float PI = acos(-1.);
+    const float TAU = 2.0 * PI;
+    const float PI_2 = 0.5 * PI;
+    const float TOLERANCE = 1.0E-4;
+    const float MAX_RAY_LENGTH = 20.;
+    const float NORM_OFF = 0.005;
+    const float MAX_RAY_MARCHES = 30.0;
 
-  const vec4 hsv2rgb_K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+    const vec4 hsv2rgb_K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
 
-  vec3 hsv2rgb(vec3 c) {
+    vec3 hsv2rgb(vec3 c) {
       vec3 p = abs(fract(c.xxx + hsv2rgb_K.xyz) * 6.0 - hsv2rgb_K.www);
       return c.z * mix(hsv2rgb_K.xxx, clamp(p - hsv2rgb_K.xxx, 0.0, 1.0), c.y);
-  }
+    }
 
-  float rayPlane(vec3 ro, vec3 rd, vec4 p) {
+    #define HSV2RGB(c) (c.z * mix(hsv2rgb_K.xxx, clamp(abs(fract(c.xxx + hsv2rgb_K.xyz) * 6.0 - hsv2rgb_K.www) - hsv2rgb_K.xxx, 0.0, 1.0), c.y))
+
+    const float hoff = 0.;
+    const vec3 skyCol = HSV2RGB(vec3(hoff + 0.57, 0.70, 0.25));
+    const vec3 sunDir = normalize(vec3(0.0, 0.0, 1.0));
+
+    float g_anim;
+
+    float rayPlane(vec3 ro, vec3 rd, vec4 p) {
       return -(dot(ro, p.xyz) + p.w) / dot(rd, p.xyz);
-  }
+    }
 
-  mat3 rotationMatrix(vec3 angles) {
-      float cx = cos(angles.x), sx = sin(angles.x);
-      float cy = cos(angles.y), sy = sin(angles.y);
-      float cz = cos(angles.z), sz = sin(angles.z);
+    vec3 aces_approx(vec3 v) {
+      v = max(v, 0.0);
+      v *= 0.6;
+      float a = 2.51;
+      float b = 0.03;
+      float c = 2.43;
+      float d = 0.59;
+      float e = 0.14;
+      return clamp((v * (a * v + b)) / (v * (c * v + d) + e), 0.0, 1.0);
+    }
 
-      return mat3(
-          cy * cz, cz * sx * sy - cx * sz, cx * cz * sy + sx * sz,
-          cy * sz, cx * cz + sx * sy * sz, -cz * sx + cx * sy * sz,
-          -sy, cy * sx, cx * cy
-      );
-  }
-
-  float box(vec2 p, vec2 b) {
+    float box(vec2 p, vec2 b) {
       vec2 d = abs(p) - b;
       return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0);
-  }
+    }
 
-  float twistedBoxTorus(vec3 p, float twist, vec2 boxDims, float radius) {
-      p -= torusPosition;
-      p = rotationMatrix(torusRotation) * p;
+    float twistedBoxTorus(vec3 p, vec3 d) {
+      vec2 q = vec2(length(p.xz) - d.x, p.y);
+      float a = atan(p.x, p.z);
+      mat2 r = ROT(a + g_anim);
+      return box(r * q, vec2(d.y)) - d.z;
+    }
 
-      vec2 q = vec2(length(p.xz) - (radius), p.y);
-      float angle = atan(p.x, p.z) + twist * iTime;
-      mat2 rot = ROT(angle);
-      return box(rot * q, boxDims);
-  }
+    float df(vec3 p) {
+      vec3 p0 = p.yzx;
+      float d = twistedBoxTorus(p0, vec3(2.5, 0.6, 0.075));
+      return d;
+    }
 
-  float rayMarch(vec3 ro, vec3 rd) {
+    float rayMarch(vec3 ro, vec3 rd) {
       float t = 0.0;
-      for (int i = 0; i < 100; i++) {
-          vec3 p = ro + rd * t;
-          float d = twistedBoxTorus(p, twistAmount, boxSize, torusRadius);
-          if (d < TOLERANCE) return t;
-          t += d;
-          if (t > MAX_RAY_LENGTH) break;
+      for (int i = 0; i < int(MAX_RAY_MARCHES); ++i) {
+        if (t > float(MAX_RAY_LENGTH)) break;
+        float d = df(ro + rd * t);
+        if (d < TOLERANCE) return t;
+        t += d;
       }
-      return t;
-  }
+      return MAX_RAY_LENGTH;
+    }
 
-  vec3 normal(vec3 p) {
-      vec2 e = vec2(NORM_OFF, 0.0);
+    vec3 normal(vec3 pos) {
+      vec2 eps = vec2(NORM_OFF, 0.0);
       return normalize(vec3(
-          twistedBoxTorus(p + e.xyy, twistAmount, boxSize, torusRadius) - twistedBoxTorus(p - e.xyy, twistAmount, boxSize, torusRadius),
-          twistedBoxTorus(p + e.yxy, twistAmount, boxSize, torusRadius) - twistedBoxTorus(p - e.yxy, twistAmount, boxSize, torusRadius),
-          twistedBoxTorus(p + e.yyx, twistAmount, boxSize, torusRadius) - twistedBoxTorus(p - e.yyx, twistAmount, boxSize, torusRadius)
+        df(pos + eps.xyy) - df(pos - eps.xyy),
+        df(pos + eps.yxy) - df(pos - eps.yxy),
+        df(pos + eps.yyx) - df(pos - eps.yyx)
       ));
-  }
+    }
 
-  vec3 render(vec3 ro, vec3 rd) {
-      float t = rayMarch(ro, rd);
-      vec3 skyCol = hsv2rgb(vec3(hoff + skyHue, skySaturation, skyValue));
-      vec3 col = skyCol;
+    vec3 render0(vec3 ro, vec3 rd) {
+      vec3 col = vec3(0.0);
 
-      float groundT = rayPlane(ro, rd, vec4(0.0, 1.0, 0.0, groundPosition));
-      float ceilingT = rayPlane(ro, rd, vec4(0.0, -1.0, 0.0, ceilingPosition));
+      col += 1E-2 * (skyCol * skyCol) / (1.0001 + dot(rd, sunDir));
 
-      if (t < MAX_RAY_LENGTH) {
-          vec3 p = ro + rd * t;
-          vec3 n = normal(p);
-          float diff = max(dot(n, sunDir), 0.0);
-          col = mix(vec3(0.2, 0.3, 0.8), vec3(1.0, 0.8, 0.5), diff);
+      float tp0 = rayPlane(ro, rd, vec4(vec3(0.0, -1.0, 0.0), -5.0));
+      float tp1 = rayPlane(ro, rd, vec4(vec3(0.0, -1.0, 0.0), 6.0));
+
+      if (tp0 > 0.0) {
+        col += 0.85 * (skyCol) * exp(-0.5 * (length((ro + tp0 * rd).xz)));
       }
 
-      if (groundT > 0.0) {
-          vec3 p = ro + rd * groundT;
-          col += reflectionStrength * hsv2rgb(vec3(0.6, 0.3, 0.7)) * max(dot(p, sunDir), 0.0);
-      }
+      if (tp1 > 0.0) {
+        vec3 pos = ro + tp1 * rd;
+        vec2 pp = pos.xz;
+        float db = box(pp, vec2(5.0, 9.0)) - 3.0;
 
-      if (ceilingT > 0.0) {
-          col += reflectionStrength * hsv2rgb(vec3(0.2, 0.8, 0.9));
+        col += vec3(4.0) * skyCol * rd.y * rd.y * smoothstep(0.25, 0.0, db);
+        col += vec3(0.8) * skyCol * exp(-0.5 * max(db, 0.0));
+        col += 0.25 * sqrt(skyCol) * max(-db, 0.0);
       }
 
       return col;
-  }
+    }
 
-  void main() {
-      vec2 uv = gl_FragCoord.xy / RESOLUTION.xy;
-      uv = uv * 2.0 - 1.0;
-      uv.x *= RESOLUTION.x / RESOLUTION.y;
+    vec3 render1(vec3 ro, vec3 rd) {
+      vec3 col = vec3(0.0);
 
-      vec3 ro = vec3(uv, 5.0);
-      vec3 rd = vec3(0.0, 0.0, -1.0);
+      float te = rayMarch(ro, rd);
+      if (te < MAX_RAY_LENGTH) {
+        vec3 ep = ro + rd * te;
+        vec3 en = normal(ep);
+        vec3 er = reflect(rd, en);
 
-      vec3 color = render(ro, rd);
-      gl_FragColor = vec4(color, 1.0);
-  }
+        float fre = 1.0 + dot(rd, en);
+        fre *= fre;
+        col += skyCol * 0.125;
+        col += mix(0.5, 2.0, fre) * render0(ep, er);
+      } else {
+        col += render0(ro, rd);
+      }
+
+      return col;
+    }
+
+    void main() {
+      vec2 q = gl_FragCoord.xy / iResolution.xy; // Normalized coordinates
+      vec2 p = -1.0 + 2.0 * q;                   // Remap to range [-1, 1]
+      vec2 pp = p;                               // Preserve for further use
+      p.x *= iResolution.x / iResolution.y;      // Adjust for aspect ratio
+
+      float fov = tan(TAU / 6.0); // Field of View
+      vec3 la = vec3(0.0, 0.0, 0.0); // Look-at point
+      vec3 up = vec3(0.0, 1.0, 0.0); // Up vector
+      vec3 ww = normalize(la - ro);  // Forward vector
+      vec3 uu = normalize(cross(up, ww)); // Right vector
+      vec3 vv = cross(ww, uu); // Up vector (orthogonal)
+
+      vec3 rd = normalize(-p.x * uu + p.y * vv + fov * ww); // Ray direction
+
+      vec3 col = render1(ro, rd); // Render color
+      col -= 0.05 * length(pp);   // Darkening effect
+      col = aces_approx(col);     // Tone mapping
+      col = sqrt(col);            // Gamma correction
+
+      gl_FragColor = vec4(col, 1.0); // Output final color
+    }
   `
 );
 
-extend({ BufferAShader });
+extend({ BufferAShaderMaterial });
 
-const BufferA: React.FC = () => {
+export default function BufferA() {
     const materialRef = useRef<any>();
-    const meshRef = useRef<THREE.Mesh>(null);
-    const { size } = useThree();
 
-    // Add Leva controls
-    const {
-        twistAmount,
-        boxSize,
-        torusRadius,
-        torusPosition,
-        torusRotation,
-        sunDir,
-        groundPosition,
-        ceilingPosition,
-        reflectionStrength,
-        skyHue,
-        skySaturation,
-        skyValue,
-        hoff,
-    } = useControls({
-        twistAmount: { value: 0.1, min: -5.0, max: 5.0, step: 0.1 },
-        boxSize: { value: { x: 0.2, y: 0.2 }, min: 0.1, max: 2.0, step: 0.1 },
-        torusRadius: { value: 1.25, min: 1.0, max: 5.0, step: 0.1 },
-        torusPosition: {
-            value: { x: 1.0, y: 1.0, z: 0.0 },
-            min: -5.0,
-            max: 5.0,
-            step: 0.1,
-        },
-        torusRotation: {
-            value: { x: 1.6, y: 0.0, z: 0.0 },
-            min: -Math.PI,
-            max: Math.PI,
-            step: 0.1,
-        },
-        sunDir: {
-            value: { x: 0.0, y: 0.0, z: 1.0 },
-            min: -1.0,
-            max: 1.0,
-            step: 0.1,
-        },
-        groundPosition: { value: -5.0, min: -10.0, max: 0.0, step: 0.1 },
-        ceilingPosition: { value: 6.0, min: 0.0, max: 10.0, step: 0.1 },
-        reflectionStrength: { value: 1.0, min: 0.0, max: 2.0, step: 0.1 },
-        skyHue: { value: 0.57, min: 0.0, max: 1.0, step: 0.01 },
-        skySaturation: { value: 0.7, min: 0.0, max: 1.0, step: 0.01 },
-        skyValue: { value: 0.25, min: 0.0, max: 1.0, step: 0.01 },
-        hoff: { value: 0.0, min: 0.0, max: 1.0, step: 0.01 },
+    // Leva controls
+    const { x, y, z } = useControls("Camera Position (ro)", {
+        x: { value: 1.3, min: -10, max: 10, step: 0.1 },
+        y: { value: 1.1, min: -10, max: 10, step: 0.1 },
+        z: { value: 8.0, min: -20, max: 20, step: 0.1 },
     });
 
-    // Update uniforms dynamically
-    useFrame(({ clock }) => {
-        const aspectRatio = size.width / size.height;
-
+    useFrame(({ clock, size }) => {
         if (materialRef.current) {
             materialRef.current.iTime = clock.getElapsedTime();
             materialRef.current.iResolution.set(size.width, size.height, 1);
-            materialRef.current.twistAmount = twistAmount;
-            materialRef.current.boxSize.set(boxSize.x, boxSize.y);
-            materialRef.current.torusRadius = torusRadius;
-            materialRef.current.torusPosition.set(
-                torusPosition.x * aspectRatio,
-                torusPosition.y,
-                torusPosition.z
-            );
-            materialRef.current.torusRotation.set(
-                torusRotation.x,
-                torusRotation.y,
-                torusRotation.z
-            );
-            materialRef.current.sunDir.set(sunDir.x, sunDir.y, sunDir.z);
-            materialRef.current.groundPosition = groundPosition;
-            materialRef.current.ceilingPosition = ceilingPosition;
-            materialRef.current.reflectionStrength = reflectionStrength;
-            materialRef.current.skyHue = skyHue;
-            materialRef.current.skySaturation = skySaturation;
-            materialRef.current.skyValue = skyValue;
-            materialRef.current.hoff = hoff;
+            materialRef.current.ro.set(x, y, z); // Update camera position
         }
     });
 
     return (
-        <mesh ref={meshRef}>
+        <mesh>
             <planeGeometry args={[window.innerWidth, window.innerHeight]} />
-            <bufferAShader ref={materialRef} />
+            <bufferAShaderMaterial ref={materialRef} />
         </mesh>
     );
-};
-
-export default BufferA;
+}
