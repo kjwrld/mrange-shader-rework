@@ -12,7 +12,7 @@ const CanvasWrapper: React.FC<CanvasWrapperProps> = ({ children }) => {
             camera={{ position: [0, 0, 5], fov: 90 }}
             gl={{ antialias: false }}
         >
-            <color attach="background" args={["white"]} />
+            <color attach="background" args={["black"]} />
             <OrbitControls
                 enableZoom={false}
                 enableRotate={false}

@@ -14,7 +14,6 @@ const BufferAShaderMaterial = shaderMaterial(
         ),
         ro: new THREE.Vector3(1.3, -1, 8.0), // Default camera position
         twistAmount: 5,
-        butterflyPosition: new THREE.Vector3(0.0, 0.0, 0.0), // Add butterfly position
     },
     `
     varying vec2 vUv;
@@ -41,7 +40,7 @@ const BufferAShaderMaterial = shaderMaterial(
     const float TOLERANCE = 1.0E-4;
     const float MAX_RAY_LENGTH = 20.;
     const float NORM_OFF = 0.005;
-    const float MAX_RAY_MARCHES = 30.0;
+    const float MAX_RAY_MARCHES = 64.0;
 
     const vec4 hsv2rgb_K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
 
@@ -85,52 +84,10 @@ const BufferAShaderMaterial = shaderMaterial(
       return box(r * q, vec2(d.y)) - d.z;
     }
 
-    // Butterfly-specific helper functions
-    float position_good(float t, in float T) {
-        if (t >= T) return t - 0.5 * T;
-        float f = t / T;
-        return f * f * f * (T - t * 0.5);
-    }
-
-    vec4 butterfly(vec2 p) {
-        p.x = abs(p.x);
-        p.y *= 0.9;
-        vec4 col = vec4(0.0);
-
-        float a = atan(p.x, p.y);
-        float r = length(p);
-
-        if (p.y < 0.0) {
-            float f = 0.6 + 0.01 * sin(24.0 * a);
-            float w = 1.1 * a - 0.8;
-            f *= sin(w) * sin(w);
-
-            float th = f + 0.001;
-            float th2 = th;
-
-            vec3 wcol = mix(vec3(210, 119, 40) / 255.0,
-                            vec3(232, 79, 12) / 255.0,
-                            smoothstep(0.0, 0.7, r));
-            wcol *= 1.5;
-            wcol *= smoothstep(0.02, 0.03, (th - r) * th);
-
-            float d = r - (th + th2) * 0.5;
-            col = vec4(wcol, smoothstep(0.0, 2.0 * fwidth(d), -d));
-        }
-        return col;
-    }
-
     // Integrate butterfly into df function
     float df(vec3 p) {
         vec3 p0 = p.yzx;
         float d = twistedBoxTorus(p0, vec3(2.5, 0.6, 0.075));
-        
-        // --- Add butterfly with position offset ---
-        vec2 butterflyUV = vec2(length((p - butterflyPosition).xy), (p - butterflyPosition).z);
-        vec4 butterflyCol = butterfly(butterflyUV);
-        d = mix(d, length(butterflyCol.xyz), butterflyCol.w); // Combine geometry with butterfly
-        // --- End butterfly addition ---
-
         return d;
     }
 
@@ -190,13 +147,6 @@ const BufferAShaderMaterial = shaderMaterial(
 
         float fre = 1.0 + dot(rd, en);
         fre *= fre;
-
-        // --- Butterfly integration into final render ---
-        vec2 butterflyUV = vec2(length((ep - butterflyPosition).xy), (ep - butterflyPosition).z);
-        vec4 butterflyCol = butterfly(butterflyUV);
-        col += butterflyCol.rgb * butterflyCol.a;
-        // --- End butterfly integration ---
-
         col += skyCol * 0.125;
         col += mix(0.5, 2.0, fre) * render0(ep, er);
       } else {
@@ -223,7 +173,7 @@ const BufferAShaderMaterial = shaderMaterial(
       vec3 rd = normalize(-p.x * uu + p.y * vv + fov * ww); // Ray direction
 
       vec3 col = render1(ro, rd); // Render color
-      col -= 0.05 * length(pp);   // Darkening effect
+      // col -= 0.05 * length(pp);   // Darkening effect
       col = aces_approx(col);     // Tone mapping
       col = sqrt(col);            // Gamma correction
 
@@ -271,10 +221,7 @@ export default function BufferA() {
     return (
         <mesh>
             <planeGeometry args={[window.innerWidth, window.innerHeight]} />
-            <bufferAShaderMaterial
-                ref={materialRef}
-                butterflyPosition={new THREE.Vector3(8.0, 4.0, 0.0)}
-            />
+            <bufferAShaderMaterial ref={materialRef} />
         </mesh>
     );
 }
