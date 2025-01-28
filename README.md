@@ -6,7 +6,7 @@ Interactive GLSL Shader with React Three Fiber
 
 ## Overview
 
-This project is a modern web adaptation of a GLSL shader originally inspired by [Mårten Rånge](https://www.shadertoy.com/view/msVBzm). It demonstrates ray marching techniques to render a dynamic scene featuring a lorenz attractor within a plane.
+This project is a modern web adaptation of a GLSL shader originally inspired by [Mårten Rånge](https://www.shadertoy.com/view/msVBzm). It demonstrates ray marching techniques to render a dynamic scene and I added lerping to the render output for UI
 
 ## Features
 
