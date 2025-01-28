@@ -3,7 +3,6 @@ import { Leva } from "leva";
 import * as THREE from "three";
 import CanvasWrapper from "./components/CanvasWrapper";
 import BufferA from "./components/BufferAShader";
-import FXAA from "./components/FXAAShader";
 
 const App: React.FC = () => {
     const renderTarget = useRef<THREE.WebGLRenderTarget>();
@@ -20,9 +19,6 @@ const App: React.FC = () => {
             <Leva collapsed />
             <CanvasWrapper>
                 <BufferA />
-                {renderTarget.current && (
-                    <FXAA texture={renderTarget.current.texture} />
-                )}
             </CanvasWrapper>
         </>
     );

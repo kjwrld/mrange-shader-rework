@@ -1,16 +1,17 @@
 import { BufferGeometry, Material, Mesh } from "three";
-import { BufferAShader, FXAAShader } from "./components/ShaderMaterials"; // Path to your shader materials
+import { BufferAShaderMaterial } from "./components/BufferAShader";
+import { FXAAShaderMaterial } from "./components/FXAAShader";
 
 declare global {
     namespace JSX {
         interface IntrinsicElements {
-            bufferAShader: ReactThreeFiber.Object3DNode<
-                BufferAShader,
-                typeof BufferAShader
+            bufferAShaderMaterial: ReactThreeFiber.Object3DNode<
+                BufferAShaderMaterial,
+                typeof BufferAShaderMaterial
             >;
-            fxaaShader: ReactThreeFiber.Object3DNode<
-                FXAAShader,
-                typeof FXAAShader
+            fXAAShaderMaterial: ReactThreeFiber.Object3DNode<
+                FXAAShaderMaterial,
+                typeof FXAAShaderMaterial
             >;
         }
     }
