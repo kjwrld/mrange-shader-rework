@@ -14,9 +14,9 @@ const CanvasWrapper: React.FC<CanvasWrapperProps> = ({ children }) => {
         >
             <color attach="background" args={["white"]} />
             <OrbitControls
-            // enableZoom={false}
-            // enableRotate={false}
-            // enablePan={false}
+                enableZoom={false}
+                enableRotate={false}
+                enablePan={false}
             />
             {children}
         </Canvas>

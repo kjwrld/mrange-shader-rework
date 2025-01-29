@@ -1,3 +1,12 @@
+@font-face {
+    font-family: "Breul Grotesk A";
+    src: url("/mrange-shader-rework/fonts/Breul Grotesk A Light.woff2")
+        format("woff2");
+    font-weight: 300; /* Light weight */
+    font-style: normal;
+    font-display: swap;
+}
+
 body,
 html,
 #root,
@@ -7,6 +16,7 @@ canvas {
     width: 100%;
     height: 100%;
     overflow: hidden;
+    z-index: 1 !important;
 }
 
 .leva {

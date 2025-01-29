@@ -40,7 +40,7 @@ const BufferAShaderMaterial = shaderMaterial(
     const float TOLERANCE = 1.0E-4;
     const float MAX_RAY_LENGTH = 20.;
     const float NORM_OFF = 0.005;
-    const float MAX_RAY_MARCHES = 64.0;
+    const float MAX_RAY_MARCHES = 32.0;
 
     const vec4 hsv2rgb_K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
 
@@ -53,7 +53,6 @@ const BufferAShaderMaterial = shaderMaterial(
 
     const float hoff = 0.;
     const vec3 skyCol = HSV2RGB(vec3(hoff + 0.57, 0.70, 0.25));
-    // const vec3 sunDir = normalize(vec3(0.0, 0.0, 1.0));
 
     float g_anim;
     
@@ -205,7 +204,7 @@ export default function BufferA() {
                 mousePosition.current.y * 4, // Map mouse y to range
                 10.0
             );
-            lerpedCameraPosition.current.lerp(targetPosition, 0.1); // Smooth transition
+            lerpedCameraPosition.current.lerp(targetPosition, 0.5); // Smooth transition
             materialRef.current.ro.copy(lerpedCameraPosition.current);
         }
     });

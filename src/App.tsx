@@ -1,25 +1,17 @@
-import { useEffect, useRef } from "react";
+import React from "react";
 import { Leva } from "leva";
-import * as THREE from "three";
 import CanvasWrapper from "./components/CanvasWrapper";
 import BufferA from "./components/BufferAShader";
+import OverlayUI from "./components/OverlayUI";
 
 const App: React.FC = () => {
-    const renderTarget = useRef<THREE.WebGLRenderTarget>();
-
-    useEffect(() => {
-        renderTarget.current = new THREE.WebGLRenderTarget(
-            window.innerWidth,
-            window.innerHeight
-        );
-    }, []);
-
     return (
         <>
             <Leva collapsed />
             <CanvasWrapper>
                 <BufferA />
             </CanvasWrapper>
+            <OverlayUI />
         </>
     );
 };
