@@ -2,14 +2,24 @@
 import { useEffect, useState } from "react";
 import "./PopUp.css";
 
-export default function PopUp() {
+interface PopUpProps {
+    title: string;
+    message: string;
+    showAfter?: number;
+}
+
+export default function PopUp({
+    title,
+    message,
+    showAfter = 2000, // Default to 2 seconds
+}: PopUpProps) {
     const [visible, setVisible] = useState(false);
     const [isClosing, setIsClosing] = useState(false);
 
     useEffect(() => {
         // if (!localStorage.getItem("popupClosed")) {
         if (!visible) {
-            const timer = setTimeout(() => setVisible(true), 2000);
+            const timer = setTimeout(() => setVisible(true), showAfter);
             return () => clearTimeout(timer);
         }
     }, []);
@@ -28,26 +38,22 @@ export default function PopUp() {
         <div className={`popup-overlay ${isClosing ? "slide-out" : ""}`}>
             <div className="popup-content">
                 <div className="popup-header">
-                    <h1>NOTIFICATION</h1>
-                    <button className="close-button" onClick={handleClose}>
+                    <h1>{title}</h1>
+                    <button
+                        className="close-button"
+                        onClick={handleClose}
+                        aria-label="Close Popup"
+                    >
                         &times;
                     </button>
                 </div>
                 <p>
-                    this project was an exercise to
-                    <br />
-                    - practice raymarching
-                    <br />
-                    - design ux for 3D scenes
-                    <br />
-                    original shader art by{" "}
-                    <a
-                        href="https://x.com/range_marten"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        @range_marten
-                    </a>
+                    {message.split("\n").map((line, index) => (
+                        <span key={index}>
+                            {line}
+                            <br />
+                        </span>
+                    ))}
                 </p>
             </div>
         </div>
