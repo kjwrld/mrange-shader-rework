@@ -12,7 +12,7 @@ const BufferAShaderMaterial = shaderMaterial(
             window.innerHeight,
             1
         ),
-        ro: new THREE.Vector3(1.3, -1, 8.0), // Default camera position
+        ro: new THREE.Vector3(1.3, 0.1, 8.0), // Default camera position
         twistAmount: 5,
     },
     `
@@ -32,15 +32,14 @@ const BufferAShaderMaterial = shaderMaterial(
     uniform float iTime;      // Time in seconds
     uniform vec3 ro;
     uniform float twistAmount;
-    uniform vec3 butterflyPosition; // New uniform for butterfly position
 
     const float PI = acos(-1.);
     const float TAU = 2.0 * PI;
     const float PI_2 = 0.5 * PI;
     const float TOLERANCE = 1.0E-4;
-    const float MAX_RAY_LENGTH = 20.;
+    const float MAX_RAY_LENGTH = 30.;
     const float NORM_OFF = 0.005;
-    const float MAX_RAY_MARCHES = 32.0;
+    const float MAX_RAY_MARCHES = 64.0;
 
     const vec4 hsv2rgb_K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
 
@@ -83,7 +82,6 @@ const BufferAShaderMaterial = shaderMaterial(
       return box(r * q, vec2(d.y)) - d.z;
     }
 
-    // Integrate butterfly into df function
     float df(vec3 p) {
         vec3 p0 = p.yzx;
         float d = twistedBoxTorus(p0, vec3(2.5, 0.6, 0.075));
@@ -185,8 +183,8 @@ extend({ BufferAShaderMaterial });
 
 export default function BufferA() {
     const materialRef = useRef<any>();
-    const lerpedCameraPosition = useRef(new THREE.Vector3(0, 0.1, 8.0)); // Default camera position
-    const mousePosition = useRef({ x: 0, y: 0 });
+    const lerpedCameraPosition = useRef(new THREE.Vector3(0.1, 0.1, 8.0)); // Default camera position
+    const mousePosition = useRef({ x: 0, y: -0.5 });
 
     const onMouseMove = (event: MouseEvent) => {
         const { clientX, clientY } = event;
@@ -200,11 +198,11 @@ export default function BufferA() {
             materialRef.current.iResolution.set(size.width, size.height, 1);
             // Lerp the camera position
             const targetPosition = new THREE.Vector3(
-                mousePosition.current.x * -5, // Map mouse x to range
+                mousePosition.current.x * -4, // Map mouse x to range
                 mousePosition.current.y * 4, // Map mouse y to range
                 10.0
             );
-            lerpedCameraPosition.current.lerp(targetPosition, 0.5); // Smooth transition
+            lerpedCameraPosition.current.lerp(targetPosition, 0.1); // Smooth transition
             materialRef.current.ro.copy(lerpedCameraPosition.current);
         }
     });

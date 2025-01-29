@@ -1,0 +1,92 @@
+/* PopUp.css */
+.popup-overlay {
+    overflow: hidden;
+}
+
+.popup-overlay {
+    position: fixed;
+    top: 20px;
+    right: 25px;
+    width: 300px;
+    /* background: rgba(234, 248, 252, 0.6); #eaf8fc with transparency */
+    backdrop-filter: blur(20px);
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    color: #0f1f28;
+    padding: 20px;
+    z-index: 1000;
+    transform: translateY(-50px);
+    opacity: 0;
+    animation: slide-in 0.5s forwards;
+    font-family: "Breul Grotesk A", "Segoe UI", Tahoma, Geneva, Verdana,
+        sans-serif;
+}
+
+.popup-overlay.slide-out {
+    animation: slide-out 0.5s forwards;
+}
+
+@keyframes slide-in {
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slide-out {
+    to {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+}
+
+.popup-content {
+    position: relative;
+}
+
+.popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(237, 247, 250, 0.6); /* Slightly darker than body */
+    padding: 10px 15px;
+    border-radius: 10px 10px 0 0;
+}
+
+.popup-header h1 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.popup-body {
+    padding-left: 8px;
+}
+
+.close-button {
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    color: #0f1f28;
+    cursor: pointer;
+}
+
+.close-button:hover {
+    color: #ff0000; /* Optional: Change color on hover */
+}
+
+.popup-content p {
+    margin-top: 15px;
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+.popup-content a {
+    color: #0f1f28;
+    text-decoration: underline;
+    padding-right: 0.5rem;
+}
+
+/* Optional: Smooth transition for hover effects */
+.close-button {
+    transition: color 0.3s ease;
+}

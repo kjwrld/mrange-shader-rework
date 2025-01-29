@@ -4,7 +4,6 @@
     left: 0;
     width: 100%;
     height: 100%;
-    pointer-events: none;
     font-family: "Breul Grotesk A", "Segoe UI", Tahoma, Geneva, Verdana,
         sans-serif;
 }
@@ -23,11 +22,9 @@
 .title-section {
     flex: 1;
     min-width: 250px;
-    pointer-events: none;
     color: #0f1f28;
     font-weight: bolder;
     font-size: 1.25rem;
-    word-wrap: break-word;
 }
 
 .blurry-title,
@@ -38,6 +35,7 @@
 
 .blurry-title {
     margin-bottom: 0.5rem;
+    max-width: 450px;
 }
 
 .blurry-subtitle {
@@ -46,12 +44,73 @@
     margin-top: 0.5rem;
 }
 
+/* Decorative Horizontal Lines */
+.decorative-lines {
+    position: absolute;
+    bottom: 4rem; /* Adjust based on footer height */
+    left: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Space between lines */
+    z-index: 10; /* Behind the footer */
+    pointer-events: none; /* Allows clicks to pass through */
+    overflow: visible;
+}
+
+.line {
+    position: relative;
+    width: 100%;
+    height: 2px;
+    background-color: rgba(202, 223, 229, 0); /* #cadfe5 with some opacity */
+    margin: 10px 0;
+    margin-right: 0;
+    border-radius: 1px;
+    overflow: hidden;
+}
+
+.line::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -50%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.5) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    animation: shine 3.5s infinite;
+}
+
+.line:nth-child(1)::before {
+    animation-delay: 0s;
+}
+
+.line:nth-child(2)::before {
+    animation-delay: 1s;
+}
+
+.line:nth-child(3)::before {
+    animation-delay: 1.5s;
+}
+
+@keyframes shine {
+    from {
+        left: -50%;
+    }
+    to {
+        left: 100%;
+    }
+}
+
 .footer-section {
     position: absolute;
     z-index: 20;
     bottom: 2rem;
     right: 2rem;
-    pointer-events: none;
     text-align: right;
     color: #162b38;
     font-size: 0.75rem;
@@ -82,7 +141,7 @@
 
 /* Pill-shaped Images */
 .pill-image {
-    width: 100px; /* Adjust as needed */
+    width: 100px;
     height: auto;
     aspect-ratio: 9 / 16;
     border-radius: 50px;
@@ -92,6 +151,8 @@
     margin: 16px;
 }
 
+/* Hover Effects for Images */
 .pill-image:hover {
-    transform: scale(1.5);
+    transform: scale(1.05);
+    box-shadow: 0px 6px 18px rgba(0, 0, 0, 0.3);
 }
