@@ -2,24 +2,15 @@
 import { useEffect, useState } from "react";
 import "./PopUp.css";
 
-interface PopUpProps {
-    title: string;
-    message: string;
-    showAfter?: number;
-}
-
-export default function PopUp({
-    title,
-    message,
-    showAfter = 2000, // Default to 2 seconds
-}: PopUpProps) {
+export default function PopUp() {
     const [visible, setVisible] = useState(false);
     const [isClosing, setIsClosing] = useState(false);
 
     useEffect(() => {
+        // Check if popup was closed before
         // if (!localStorage.getItem("popupClosed")) {
         if (!visible) {
-            const timer = setTimeout(() => setVisible(true), showAfter);
+            const timer = setTimeout(() => setVisible(true), 2000); // 2 seconds
             return () => clearTimeout(timer);
         }
     }, []);
@@ -28,8 +19,8 @@ export default function PopUp({
         setIsClosing(true);
         setTimeout(() => {
             setVisible(false);
-            // localStorage.setItem("popupClosed", "true");
-        }, 500);
+            localStorage.setItem("popupClosed", "true");
+        }, 500); // Duration should match the CSS animation duration
     }
 
     if (!visible) return null;
@@ -38,22 +29,26 @@ export default function PopUp({
         <div className={`popup-overlay ${isClosing ? "slide-out" : ""}`}>
             <div className="popup-content">
                 <div className="popup-header">
-                    <h1>{title}</h1>
-                    <button
-                        className="close-button"
-                        onClick={handleClose}
-                        aria-label="Close Popup"
-                    >
+                    <h1>NOTIFICATION</h1>
+                    <button className="close-button" onClick={handleClose}>
                         &times;
                     </button>
                 </div>
                 <p>
-                    {message.split("\n").map((line, index) => (
-                        <span key={index}>
-                            {line}
-                            <br />
-                        </span>
-                    ))}
+                    this project was an exercise to
+                    <br />
+                    - practice raymarching
+                    <br />
+                    - designing ux for 3D environments
+                    <br />
+                    original shader art by{" "}
+                    <a
+                        href="https://x.com/range_marten"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        @range_marten
+                    </a>
                 </p>
             </div>
         </div>

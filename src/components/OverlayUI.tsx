@@ -47,12 +47,7 @@ export default function OverlayUI() {
                     <div className="line"></div>
                 </div>
             </div>
-            <PopUp
-                title="NOTIFICATION"
-                message={`this project was an exercise to
-                - practice raymarching
-                - design ux for 3D scenes`}
-            />
+            <PopUp />
         </>
     );
 }
