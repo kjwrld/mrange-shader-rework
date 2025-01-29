@@ -8,7 +8,6 @@
     top: 20px;
     right: 25px;
     width: 300px;
-    /* background: rgba(234, 248, 252, 0.6); #eaf8fc with transparency */
     backdrop-filter: blur(20px);
     border-radius: 12px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -48,7 +47,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: rgba(237, 247, 250, 0.6); /* Slightly darker than body */
+    background: rgba(237, 247, 250, 0.6);
     padding: 10px 15px;
     border-radius: 10px 10px 0 0;
 }
@@ -71,13 +70,14 @@
 }
 
 .close-button:hover {
-    color: #ff0000; /* Optional: Change color on hover */
+    color: #ff0000;
 }
 
 .popup-content p {
     margin-top: 15px;
     font-size: 0.95rem;
     line-height: 1.4;
+    margin-left: 8px;
 }
 
 .popup-content a {
@@ -86,7 +86,6 @@
     padding-right: 0.5rem;
 }
 
-/* Optional: Smooth transition for hover effects */
 .close-button {
     transition: color 0.3s ease;
 }

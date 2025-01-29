@@ -44,17 +44,16 @@
     margin-top: 0.5rem;
 }
 
-/* Decorative Horizontal Lines */
 .decorative-lines {
     position: absolute;
-    bottom: 4rem; /* Adjust based on footer height */
+    bottom: 4rem;
     left: 0;
     width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 15px; /* Space between lines */
-    z-index: 10; /* Behind the footer */
-    pointer-events: none; /* Allows clicks to pass through */
+    gap: 20px;
+    z-index: 10;
+    pointer-events: none;
     overflow: visible;
 }
 
@@ -62,8 +61,8 @@
     position: relative;
     width: 100%;
     height: 2px;
-    background-color: rgba(202, 223, 229, 0); /* #cadfe5 with some opacity */
-    margin: 10px 0;
+    background-color: rgba(202, 223, 229, 0);
+    margin: 5px 0;
     margin-right: 0;
     border-radius: 1px;
     overflow: hidden;

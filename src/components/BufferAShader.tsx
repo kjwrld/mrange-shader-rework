@@ -12,7 +12,7 @@ const BufferAShaderMaterial = shaderMaterial(
             window.innerHeight,
             1
         ),
-        ro: new THREE.Vector3(1.3, 0.1, 8.0), // Default camera position
+        ro: new THREE.Vector3(1.3, 0.1, 8.0),
         twistAmount: 5,
     },
     `
@@ -183,8 +183,8 @@ extend({ BufferAShaderMaterial });
 
 export default function BufferA() {
     const materialRef = useRef<any>();
-    const lerpedCameraPosition = useRef(new THREE.Vector3(0.1, 0.1, 8.0)); // Default camera position
-    const mousePosition = useRef({ x: 0, y: -0.5 });
+    const lerpedCameraPosition = useRef(new THREE.Vector3(0.1, 0.1, 8.0));
+    const mousePosition = useRef({ x: 0, y: -0.5 }); // Default camera position
 
     const onMouseMove = (event: MouseEvent) => {
         const { clientX, clientY } = event;
@@ -207,7 +207,6 @@ export default function BufferA() {
         }
     });
 
-    // Add mouse event listener
     useEffect(() => {
         window.addEventListener("mousemove", onMouseMove);
         return () => {

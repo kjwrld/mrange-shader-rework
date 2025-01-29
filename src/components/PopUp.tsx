@@ -7,10 +7,9 @@ export default function PopUp() {
     const [isClosing, setIsClosing] = useState(false);
 
     useEffect(() => {
-        // Check if popup was closed before
         // if (!localStorage.getItem("popupClosed")) {
         if (!visible) {
-            const timer = setTimeout(() => setVisible(true), 2000); // 2 seconds
+            const timer = setTimeout(() => setVisible(true), 2000);
             return () => clearTimeout(timer);
         }
     }, []);
@@ -19,8 +18,8 @@ export default function PopUp() {
         setIsClosing(true);
         setTimeout(() => {
             setVisible(false);
-            localStorage.setItem("popupClosed", "true");
-        }, 500); // Duration should match the CSS animation duration
+            // localStorage.setItem("popupClosed", "true");
+        }, 500);
     }
 
     if (!visible) return null;
@@ -39,7 +38,7 @@ export default function PopUp() {
                     <br />
                     - practice raymarching
                     <br />
-                    - designing ux for 3D environments
+                    - design ux for 3D scenes
                     <br />
                     original shader art by{" "}
                     <a

@@ -18,7 +18,3 @@ canvas {
     overflow: hidden;
     z-index: 1 !important;
 }
-
-.leva {
-    z-index: 100; /* Ensure Leva controls are above the canvas */
-}
