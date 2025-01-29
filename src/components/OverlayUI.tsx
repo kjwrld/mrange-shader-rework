@@ -1,5 +1,5 @@
 import "./OverlayUI.css";
-import PopUp from "./Popup";
+import PopUp from "./PopUp";
 
 export default function OverlayUI() {
     return (
