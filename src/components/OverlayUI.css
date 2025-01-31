@@ -155,3 +155,27 @@
     transform: scale(1.05);
     box-shadow: 0px 6px 18px rgba(0, 0, 0, 0.3);
 }
+
+/* For Tablets and Smaller Desktops */
+@media (max-width: 1024px) {
+    .pill-image {
+        width: 90px;
+        margin: 14px;
+    }
+}
+
+/* For Large Phones and Small Tablets */
+@media (max-width: 768px) {
+    .pill-image {
+        width: 80px;
+        margin: 12px;
+    }
+}
+
+/* For Portrait Phones */
+@media (max-width: 480px) {
+    .pill-image {
+        width: 80px;
+        margin: 10px;
+    }
+}

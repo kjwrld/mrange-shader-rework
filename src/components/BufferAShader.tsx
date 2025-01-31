@@ -212,16 +212,17 @@ export default function BufferA() {
         if (!isDragging.current) return;
 
         const deltaY = event.clientY - previousMousePosition.current.y;
+        const rotationScale = 8;
 
         // Update userRotation based on deltaX
         // Positive deltaY -> rotate one way, negative -> rotate the other
         const rotationSpeed = 0.05; // Adjust as needed
-        const rotationDelta = deltaY * rotationSpeed;
+        const rotationDelta = deltaY * rotationSpeed * rotationScale;
 
         // Animate the userRotation with GSAP for smooth transition
         gsap.to(materialRef.current, {
             userRotation: materialRef.current.userRotation + rotationDelta,
-            duration: 0.2,
+            duration: 0.6,
             ease: "power1.out",
         });
 
