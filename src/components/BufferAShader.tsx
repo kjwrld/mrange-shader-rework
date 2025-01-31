@@ -2,8 +2,8 @@ import { extend, useFrame } from "@react-three/fiber";
 import { shaderMaterial } from "@react-three/drei";
 import * as THREE from "three";
 import { useRef, useEffect } from "react";
+import gsap from "gsap";
 
-// Faithful translation of the GLSL shader
 const BufferAShaderMaterial = shaderMaterial(
     {
         iTime: 0,
@@ -14,6 +14,7 @@ const BufferAShaderMaterial = shaderMaterial(
         ),
         ro: new THREE.Vector3(1.3, 0.1, 8.0),
         twistAmount: 5,
+        userRotation: 0.0, // New uniform for user-controlled rotation
     },
     `
     varying vec2 vUv;
@@ -32,6 +33,7 @@ const BufferAShaderMaterial = shaderMaterial(
     uniform float iTime;      // Time in seconds
     uniform vec3 ro;
     uniform float twistAmount;
+    uniform float userRotation;
 
     const float PI = acos(-1.);
     const float TAU = 2.0 * PI;
@@ -78,7 +80,7 @@ const BufferAShaderMaterial = shaderMaterial(
     float twistedBoxTorus(vec3 p, vec3 d) {
       vec2 q = vec2(length(p.xz) - d.x, p.y);
       float a = atan(p.x, p.z);
-      mat2 r = ROT(a + g_anim);
+      mat2 r = ROT(a + g_anim + userRotation);
       return box(r * q, vec2(d.y)) - d.z;
     }
 
@@ -186,6 +188,46 @@ export default function BufferA() {
     const lerpedCameraPosition = useRef(new THREE.Vector3(0.1, 0.1, 8.0));
     const mousePosition = useRef({ x: 0, y: -0.5 }); // Default camera position
 
+    // Gesture state
+    const isDragging = useRef(false);
+    const previousMousePosition = useRef({ x: 0, y: 0 });
+
+    const velocityX = useRef(0.0);
+    const velocityY = useRef(0.0);
+    const damping = 0.95;
+
+    // Handle mouse down
+    const handlePointerDown = (event: any) => {
+        isDragging.current = true;
+        previousMousePosition.current = { x: event.clientX, y: event.clientY };
+    };
+
+    // Handle mouse up
+    const handlePointerUp = () => {
+        isDragging.current = false;
+    };
+
+    // Handle mouse move
+    const handlePointerMove = (event: any) => {
+        if (!isDragging.current) return;
+
+        const deltaY = event.clientY - previousMousePosition.current.y;
+
+        // Update userRotation based on deltaX
+        // Positive deltaY -> rotate one way, negative -> rotate the other
+        const rotationSpeed = 0.05; // Adjust as needed
+        const rotationDelta = deltaY * rotationSpeed;
+
+        // Animate the userRotation with GSAP for smooth transition
+        gsap.to(materialRef.current, {
+            userRotation: materialRef.current.userRotation + rotationDelta,
+            duration: 0.2,
+            ease: "power1.out",
+        });
+
+        previousMousePosition.current = { x: event.clientX, y: event.clientY };
+    };
+
     const onMouseMove = (event: MouseEvent) => {
         const { clientX, clientY } = event;
         mousePosition.current.x = (clientX / window.innerWidth) * 2 - 1; // Normalize to range [-1, 1]
@@ -204,12 +246,30 @@ export default function BufferA() {
             );
             lerpedCameraPosition.current.lerp(targetPosition, 0.1); // Smooth transition
             materialRef.current.ro.copy(lerpedCameraPosition.current);
+
+            // Apply angular velocities to shader uniforms
+            materialRef.current.userRotationY += velocityY.current;
+            materialRef.current.userRotationX += velocityX.current;
+
+            // Apply damping to velocities for inertia effect
+            velocityY.current *= damping;
+            velocityX.current *= damping;
+
+            // Optional: Reset velocities if they are very low to prevent infinite small rotations
+            if (Math.abs(velocityY.current) < 0.0001) velocityY.current = 0.0;
+            if (Math.abs(velocityX.current) < 0.0001) velocityX.current = 0.0;
         }
     });
 
     useEffect(() => {
+        window.addEventListener("pointerdown", handlePointerDown);
+        window.addEventListener("pointerup", handlePointerUp);
+        window.addEventListener("pointermove", handlePointerMove);
         window.addEventListener("mousemove", onMouseMove);
         return () => {
+            window.removeEventListener("pointerdown", handlePointerDown);
+            window.removeEventListener("pointerup", handlePointerUp);
+            window.removeEventListener("pointermove", handlePointerMove);
             window.removeEventListener("mousemove", onMouseMove);
         };
     }, []);

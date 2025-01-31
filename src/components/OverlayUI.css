@@ -14,7 +14,7 @@
     align-items: flex-start;
     position: absolute;
     width: 80%;
-    top: 2.25rem;
+    top: 1.75rem;
     padding: 0 2.1rem;
     z-index: 20;
 }
@@ -140,7 +140,7 @@
 
 /* Pill-shaped Images */
 .pill-image {
-    width: 100px;
+    width: 100px; /* resize to 80 for phones */
     height: auto;
     aspect-ratio: 9 / 16;
     border-radius: 50px;

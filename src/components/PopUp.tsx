@@ -29,7 +29,7 @@ export default function PopUp() {
         <div className={`popup-overlay ${isClosing ? "slide-out" : ""}`}>
             <div className="popup-content">
                 <div className="popup-header">
-                    <h1>NOTIFICATION</h1>
+                    <h1>notification</h1>
                     <button className="close-button" onClick={handleClose}>
                         &times;
                     </button>
@@ -39,7 +39,9 @@ export default function PopUp() {
                     <br />
                     - practice raymarching
                     <br />
-                    - designing ux for 3D environments
+                    - design ux for 3D environments
+                    <br />
+                    - revisit concepts from AP Calculus
                     <br />
                     original shader art by{" "}
                     <a
