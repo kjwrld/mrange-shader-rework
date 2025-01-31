@@ -212,7 +212,7 @@ export default function BufferA() {
         if (!isDragging.current) return;
 
         const deltaY = event.clientY - previousMousePosition.current.y;
-        const rotationScale = 8;
+        const rotationScale = Math.PI;
 
         // Update userRotation based on deltaX
         // Positive deltaY -> rotate one way, negative -> rotate the other
