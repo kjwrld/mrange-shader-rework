@@ -178,4 +178,15 @@
         width: 80px;
         margin: 10px;
     }
+    .header-flex {
+        padding: 0 1rem;
+        top: 2rem;
+    }
+    .blurry-title {
+        font-size: 2rem;
+        max-width: 300px;
+    }
+    .blurry-subtitle {
+        font-size: 1.25rem;
+    }
 }
